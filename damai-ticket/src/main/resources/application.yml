@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/damai_ticket?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+logging:
+  level:
+    com.damai.damaiticket: info
+
+# ==================== AI Agent 配置 ====================
+ai:
+  enabled: true
+  provider: doubao
+  api-key: ark-9760efe2-fd77-47f0-8215-e8e5227abcf2-7dc16
+  base-url: https://ark.cn-beijing.volces.com/api/v3
+  model: doubao-seed-1-8-251228
+  timeout: 30000
+  max-conversations: 20

@@ -1,0 +1,130 @@
+/* src/styles/theme.css */
+
+/* ====== 全局基础 ====== */
+:root{
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --line: rgba(15, 23, 42, 0.08);
+
+    --brand: #1e80ff;   /* 主色 */
+    --brand2:#00c2ff;   /* 次色 */
+    --danger:#ff4d4f;
+    --success:#22c55e;
+    --warning:#f59e0b;
+
+    --r12: 12px;
+    --r16: 16px;
+    --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --shadow2: 0 6px 18px rgba(15, 23, 42, 0.10);
+}
+
+html, body, #app{
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+/* 页面容器通用 */
+.page{
+    padding: 18px;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+/* 容器宽度（可选，不喜欢就删） */
+.container{
+    max-width: 1240px;
+    margin: 0 auto;
+}
+
+/* ====== Element Plus 全局统一（核心）====== */
+.el-card{
+    border-radius: var(--r16) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.el-dialog{
+    border-radius: var(--r16) !important;
+    overflow: hidden;
+    box-shadow: var(--shadow2) !important;
+}
+.el-dialog__header{
+    padding: 16px 18px !important;
+    border-bottom: 1px solid var(--line);
+}
+.el-dialog__title{
+    font-weight: 900;
+}
+
+.el-button{
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper,
+.el-date-editor{
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--line) !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focus,
+.el-textarea__inner:focus{
+    border-color: rgba(30,128,255,.55) !important;
+    box-shadow: 0 0 0 4px rgba(30,128,255,.12) !important;
+}
+
+/* 表格更“干净” */
+.el-table{
+    border-radius: var(--r16);
+    overflow: hidden;
+}
+.el-table th{
+    background: #f3f6ff !important;
+    color: #1f2a44 !important;
+    font-weight: 900 !important;
+}
+.el-table td{
+    color: #1f2a44 !important;
+}
+
+/* Tag 统一 */
+.el-tag{
+    border-radius: 999px !important;
+    font-weight: 800 !important;
+}
+
+/* 分页统一 */
+.el-pagination .btn-next,
+.el-pagination .btn-prev,
+.el-pagination .el-pager li{
+    border-radius: 10px !important;
+}
+
+/* Tabs 更现代 */
+.el-tabs__item{
+    font-weight: 900 !important;
+}
+.el-tabs__active-bar{
+    height: 3px !important;
+    border-radius: 999px !important;
+}
+
+/* Popconfirm / messagebox 圆角 */
+.el-message-box{
+    border-radius: var(--r16) !important;
+}
+
+/* upload 按钮区 */
+.el-upload{
+    display: inline-block;
+}

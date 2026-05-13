@@ -1,0 +1,102 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'damai-ticket/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'damai-ticket/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root123456
+          MYSQL_DATABASE: damai_ticket_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Create application.yml for testing
+        run: |
+          mkdir -p damai-ticket/src/main/resources
+          cat > damai-ticket/src/main/resources/application.yml << 'EOF'
+          server:
+            port: 8081
+          
+          spring:
+            datasource:
+              url: jdbc:mysql://localhost:3306/damai_ticket_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+              username: root
+              password: root123456
+              driver-class-name: com.mysql.cj.jdbc.Driver
+            servlet:
+              multipart:
+                max-file-size: 10MB
+                max-request-size: 10MB
+          
+          mybatis-plus:
+            configuration:
+              log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+            global-config:
+              db-config:
+                id-type: auto
+          
+          ai:
+            enabled: false
+          EOF
+
+      - name: Build with Maven
+        working-directory: ./damai-ticket
+        run: mvn clean compile -q
+
+      - name: Run tests
+        working-directory: ./damai-ticket
+        run: mvn test -q
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/damai_ticket_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root123456
+
+      - name: Package application
+        working-directory: ./damai-ticket
+        run: mvn package -DskipTests -q
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: damai-ticket/target/*.jar
+          retention-days: 7

@@ -1,0 +1,47 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'damai-ticket-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'damai-ticket-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'damai-ticket-frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./damai-ticket-frontend
+        run: npm ci
+
+      - name: Lint code
+        working-directory: ./damai-ticket-frontend
+        run: npm run lint || true
+
+      - name: Build project
+        working-directory: ./damai-ticket-frontend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: damai-ticket-frontend/dist
+          retention-days: 7
