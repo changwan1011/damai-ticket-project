@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.damai.damaiticket.entity.OrderInfo;
 import com.damai.damaiticket.entity.Seat;
+import com.damai.damaiticket.service.ETicketService;
 import com.damai.damaiticket.service.OrderInfoService;
 import com.damai.damaiticket.service.SeatService;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +19,12 @@ public class OrderController {
 
     private final OrderInfoService orderInfoService;
     private final SeatService seatService;
+    private final ETicketService eticketService;
 
-    public OrderController(OrderInfoService orderInfoService, SeatService seatService) {
+    public OrderController(OrderInfoService orderInfoService, SeatService seatService, ETicketService eticketService) {
         this.orderInfoService = orderInfoService;
         this.seatService = seatService;
+        this.eticketService = eticketService;
     }
 
     // ✅ 单张下单：锁座(0->2) + 创建订单(status=0)
@@ -150,6 +153,10 @@ public class OrderController {
                         .eq("id", order.getSeatId())
                         .in("status", 0, 2)
         );
+
+        // ✅ 支付成功后，自动生成电子票
+        order = orderInfoService.getById(orderId);
+        eticketService.generateTicket(order);
 
         return "支付成功（模拟支付）";
     }

@@ -7,6 +7,7 @@ import MyOrders from "../views/MyOrders.vue";
 import Profile from "../views/Profile.vue";
 import Admin from "../views/Admin.vue";
 import Favorites from "../views/Favorites.vue";
+import ETicket from "../views/ETicket.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -19,6 +20,7 @@ const router = createRouter({
         { path: "/profile", name: "profile", component: Profile },
         { path: "/admin", name: "admin", component: Admin },
         { path: "/favorites", name: "favorites", component: Favorites },
+        { path: "/eticket", name: "eticket", component: ETicket },
         { path: "/:pathMatch(.*)*", redirect: "/events" },
     ],
 });

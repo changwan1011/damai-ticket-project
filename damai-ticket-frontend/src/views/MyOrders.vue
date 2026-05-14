@@ -58,6 +58,16 @@
           >
             {{ isRated(scope.row.id) ? "已评分" : "去评分" }}
           </el-button>
+
+          <!-- 电子票：仅已支付 -->
+          <el-button
+              v-if="scope.row.status === 1"
+              size="small"
+              type="success"
+              @click="viewTicket(scope.row)"
+          >
+            电子票
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -277,6 +287,13 @@ async function cancel(orderId) {
         "取消失败：请查看 Network 状态码（可能是 401/404/415/500）";
     ElMessage.error(String(msg));
   }
+}
+
+// 查看电子票
+function viewTicket(order) {
+  // 将订单ID存入localStorage，电子票页面会获取该订单的电子票
+  localStorage.setItem("currentOrderId", order.id);
+  router.push("/eticket");
 }
 
 onMounted(load);
