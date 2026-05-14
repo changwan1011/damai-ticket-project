@@ -7,6 +7,9 @@
       <div class="actions">
         <el-button @click="goProfile" plain>个人中心</el-button>
         <el-button @click="goOrders" type="primary" plain>我的订单</el-button>
+        <el-button @click="goFavorites" type="info" plain>
+          <el-icon><Star /></el-icon> 我的收藏
+        </el-button>
         <el-button v-if="isAdmin" @click="goAdmin" type="warning" plain>后台管理</el-button>
         <el-button type="danger" plain @click="logout">退出</el-button>
       </div>
@@ -74,31 +77,38 @@
           :key="item.id"
           class="card"
           shadow="hover"
-          @click="goSeat(item.id)"
       >
-        <el-image
-            class="img"
-            :src="fullUrl(item.imageUrl)"
-            fit="cover"
-            :preview-src-list="item.imageUrl ? [fullUrl(item.imageUrl)] : []"
-        >
-          <template #error>
-            <div class="img-fallback">暂无图片</div>
-          </template>
-        </el-image>
-
-        <div class="name">{{ item.title }}</div>
-        <div class="line">
-          <span class="tag2">{{ item.category || "未分类" }}</span>
-          <span class="price">￥{{ item.price ?? "-" }}</span>
+        <!-- 收藏按钮 -->
+        <div class="card-favorite" @click.stop="toggleFavorite(item)">
+          <el-icon v-if="favoriteSet.has(item.id)" class="favorite-icon active"><StarFilled /></el-icon>
+          <el-icon v-else class="favorite-icon"><Star /></el-icon>
         </div>
 
-        <div class="desc">
-          <div>地点：{{ item.location || "-" }}</div>
-          <div>时间：{{ item.showTime || "-" }}</div>
-        </div>
+        <div @click="goSeat(item.id)">
+          <el-image
+              class="img"
+              :src="fullUrl(item.imageUrl)"
+              fit="cover"
+              :preview-src-list="item.imageUrl ? [fullUrl(item.imageUrl)] : []"
+          >
+            <template #error>
+              <div class="img-fallback">暂无图片</div>
+            </template>
+          </el-image>
 
-        <div class="go">点击选座 →</div>
+          <div class="name">{{ item.title }}</div>
+          <div class="line">
+            <span class="tag2">{{ item.category || "未分类" }}</span>
+            <span class="price">￥{{ item.price ?? "-" }}</span>
+          </div>
+
+          <div class="desc">
+            <div>地点：{{ item.location || "-" }}</div>
+            <div>时间：{{ item.showTime || "-" }}</div>
+          </div>
+
+          <div class="go">点击选座 →</div>
+        </div>
       </el-card>
     </div>
 
@@ -124,21 +134,19 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Star, StarFilled } from "@element-plus/icons-vue";
 import request from "../api/request";
+import { addFavorite, removeFavorite, checkFavorite } from "../api/favorite";
 
 const router = useRouter();
 const isAdmin = (localStorage.getItem("role") || "").toUpperCase() === "ADMIN";
+const isLoggedIn = !!localStorage.getItem("userId");
 
 const allList = ref([]);
 const recommendList = ref([]);
 
-// 筛选
-const keyword = ref("");
-const category = ref("");
-
-// ✅ 分页状态
-const page = ref(1);
-const pageSize = ref(8);
+// 收藏状态
+const favoriteSet = ref(new Set());
 
 // 跳转
 function goSeat(showId) {
@@ -153,19 +161,51 @@ function goProfile() {
 function goAdmin() {
   router.push("/admin");
 }
+function goFavorites() {
+  router.push("/favorites");
+}
 function logout() {
   localStorage.clear();
   router.push("/login");
 }
 
-// 图片地址
-function fullUrl(p) {
-  if (!p) return "";
-  if (p.startsWith("http")) return p;
-  return "http://localhost:8081" + p;
+// 收藏功能
+async function toggleFavorite(item) {
+  if (!isLoggedIn) {
+    ElMessage.warning("请先登录");
+    router.push("/login");
+    return;
+  }
+
+  try {
+    if (favoriteSet.value.has(item.id)) {
+      // 取消收藏
+      const res = await removeFavorite(item.id);
+      if (res.data.success) {
+        favoriteSet.value.delete(item.id);
+        favoriteSet.value = new Set(favoriteSet.value);
+        ElMessage.success("已取消收藏");
+      } else {
+        ElMessage.error(res.data.message || "取消收藏失败");
+      }
+    } else {
+      // 添加收藏
+      const res = await addFavorite(item.id);
+      if (res.data.success) {
+        favoriteSet.value.add(item.id);
+        favoriteSet.value = new Set(favoriteSet.value);
+        ElMessage.success("收藏成功");
+      } else {
+        ElMessage.error(res.data.message || "收藏失败");
+      }
+    }
+  } catch (e) {
+    console.error("收藏操作失败:", e);
+    ElMessage.error("操作失败，请稍后重试");
+  }
 }
 
-// 加载列表
+// 加载演出列表后，检查收藏状态
 async function loadAll() {
   try {
     console.log("[EventList] 开始加载演出列表...");
@@ -180,6 +220,9 @@ async function loadAll() {
     // 刷新后回到第一页
     page.value = 1;
     ElMessage.success(`已加载 ${allList.value.length} 条演出`);
+
+    // 检查收藏状态
+    await checkFavorites();
   } catch (e) {
     console.error("[EventList] 加载失败:", e);
     console.error("[EventList] 错误状态:", e.response?.status);
@@ -188,6 +231,41 @@ async function loadAll() {
     allList.value = [];
     recommendList.value = [];
   }
+}
+
+// 检查收藏状态
+async function checkFavorites() {
+  if (!isLoggedIn || allList.value.length === 0) return;
+
+  try {
+    const showIds = allList.value.map(item => item.id);
+    const res = await checkFavorite(showIds);
+    if (res.data.success) {
+      const data = res.data.data || {};
+      const newSet = new Set();
+      for (const [id, isFav] of Object.entries(data)) {
+        if (isFav) newSet.add(parseInt(id));
+      }
+      favoriteSet.value = newSet;
+    }
+  } catch (e) {
+    console.error("检查收藏状态失败:", e);
+  }
+}
+
+// 筛选
+const keyword = ref("");
+const category = ref("");
+
+// ✅ 分页状态
+const page = ref(1);
+const pageSize = ref(8);
+
+// 图片地址
+function fullUrl(p) {
+  if (!p) return "";
+  if (p.startsWith("http")) return p;
+  return "http://localhost:8081" + p;
 }
 
 // ✅ 过滤（前端筛选，支持标题和地点搜索）
@@ -367,11 +445,40 @@ onMounted(loadAll);
 
 .card {
   border-radius: 14px;
-  cursor: pointer;
   transition: transform 0.2s;
+  position: relative;
 }
 .card:hover {
   transform: translateY(-2px);
+}
+
+/* 收藏按钮 */
+.card-favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.card-favorite:hover {
+  transform: scale(1.1);
+  background: white;
+}
+.favorite-icon {
+  font-size: 20px;
+  color: #909399;
+}
+.favorite-icon.active {
+  color: #f56c6c;
 }
 
 .img {
