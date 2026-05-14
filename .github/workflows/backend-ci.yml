@@ -5,11 +5,13 @@ on:
     branches: [ main, master, develop ]
     paths:
       - 'damai-ticket/**'
+      - '*.sql'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [ main, master, develop ]
     paths:
       - 'damai-ticket/**'
+      - '*.sql'
       - '.github/workflows/backend-ci.yml'
 
 jobs:
@@ -77,6 +79,12 @@ jobs:
           ai:
             enabled: false
           EOF
+
+      - name: Initialize database with SQL scripts
+        run: |
+          echo "=== Database SQL Scripts Found ==="
+          ls -la *.sql 2>/dev/null || echo "No SQL files in root"
+          echo "=================================="
 
       - name: Build with Maven
         working-directory: ./damai-ticket

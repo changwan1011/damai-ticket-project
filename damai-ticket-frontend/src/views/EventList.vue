@@ -5,12 +5,14 @@
       <div class="brand">大麦网票务系统</div>
 
       <div class="actions">
+        <el-button @click="goForum" type="success" plain>论坛</el-button>
+        <el-button @click="goFriends" type="primary" plain>好友</el-button>
         <el-button @click="goProfile" plain>个人中心</el-button>
         <el-button @click="goOrders" type="primary" plain>我的订单</el-button>
         <el-button @click="goFavorites" type="info" plain>
-          <el-icon><Star /></el-icon> 我的收藏
+          <el-icon><Star /></el-icon> 收藏
         </el-button>
-        <el-button v-if="isAdmin" @click="goAdmin" type="warning" plain>后台管理</el-button>
+        <el-button v-if="isAdmin" @click="goAdmin" type="warning" plain>后台</el-button>
         <el-button type="danger" plain @click="logout">退出</el-button>
       </div>
     </div>
@@ -163,6 +165,12 @@ function goAdmin() {
 }
 function goFavorites() {
   router.push("/favorites");
+}
+function goForum() {
+  router.push("/forum");
+}
+function goFriends() {
+  router.push("/friends");
 }
 function logout() {
   localStorage.clear();

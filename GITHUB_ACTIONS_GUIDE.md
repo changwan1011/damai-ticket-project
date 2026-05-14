@@ -16,7 +16,8 @@ damai-ticket-project/
 │       └── frontend-ci.yml   # 前端 CI 流水线
 ├── damai-ticket/            # Spring Boot 后端
 ├── damai-ticket-frontend/   # Vue 3 前端
-└── damai-ticket.sql         # 数据库脚本
+├── *.sql                     # 数据库脚本（eticket.sql, favorite.sql, forum_friend_chat.sql）
+└── GITHUB_ACTIONS_GUIDE.md  # CI 使用指南
 ```
 
 ## 流水线功能
@@ -28,6 +29,7 @@ damai-ticket-project/
 - ✅ 自动打包 JAR 文件
 - ✅ MySQL 数据库集成测试
 - ✅ 构建产物上传
+- ✅ SQL 脚本检测与展示
 
 ### Frontend CI (`frontend-ci.yml`)
 - ✅ 代码提交后自动触发
@@ -35,6 +37,29 @@ damai-ticket-project/
 - ✅ ESLint 代码检查
 - ✅ 自动构建生产版本（Vite）
 - ✅ 构建产物上传
+- ✅ 构建摘要展示
+
+## 最近更新功能（2025年5月）
+
+### 好友社交功能
+- 好友申请与管理系统
+- 实时聊天功能（Chat.vue）
+- 登录时好友申请通知
+
+### 论坛功能
+- 帖子发布与浏览
+- 评论与回复
+- 论坛页面添加好友按钮
+
+### 管理员后台增强
+- 数据统计默认展示全部汇总
+- 各演出售票横向对比分析
+- 售出率可视化进度条
+
+### 数据库脚本
+- `eticket.sql` - 电子票功能表结构
+- `favorite.sql` - 收藏功能表结构
+- `forum_friend_chat.sql` - 论坛、好友、聊天表结构
 
 ## CI 执行流程
 

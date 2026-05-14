@@ -8,6 +8,9 @@ import Profile from "../views/Profile.vue";
 import Admin from "../views/Admin.vue";
 import Favorites from "../views/Favorites.vue";
 import ETicket from "../views/ETicket.vue";
+import Forum from "../views/Forum.vue";
+import Friends from "../views/Friends.vue";
+import Chat from "../views/Chat.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -21,6 +24,9 @@ const router = createRouter({
         { path: "/admin", name: "admin", component: Admin },
         { path: "/favorites", name: "favorites", component: Favorites },
         { path: "/eticket", name: "eticket", component: ETicket },
+        { path: "/forum", name: "forum", component: Forum },
+        { path: "/friends", name: "friends", component: Friends },
+        { path: "/chat", name: "chat", component: Chat },
         { path: "/:pathMatch(.*)*", redirect: "/events" },
     ],
 });

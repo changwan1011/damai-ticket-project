@@ -75,6 +75,7 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import request from "../api/request";
+import { getPendingRequests } from "../api/friend";
 
 const router = useRouter();
 const active = ref("login");
@@ -107,11 +108,41 @@ function persistLogin(user) {
   }
 }
 
-function jumpByRole(role) {
+async function jumpByRole(role) {
   const r = (role || "USER").toUpperCase();
   localStorage.setItem("role", r);
-  if (r === "ADMIN") router.push("/admin");
-  else router.push("/events");
+  
+  // 先跳转到主页
+  if (r === "ADMIN") {
+    router.push("/admin");
+    return;
+  }
+  
+  router.push("/events");
+  
+  // 跳转后再检查是否有待处理的好友申请
+  const userId = localStorage.getItem("userId");
+  if (userId) {
+    try {
+      const res = await getPendingRequests(Number(userId));
+      if (res.data.success && res.data.data && res.data.data.length > 0) {
+        const count = res.data.data.length;
+        setTimeout(() => {
+          ElMessage({
+            type: "info",
+            duration: 8000,
+            showClose: true,
+            message: `📬 您有 ${count} 条待处理的好友申请！点击跳转到好友页面`,
+            onClick: () => {
+              router.push("/friends");
+            }
+          });
+        }, 300);
+      }
+    } catch (e) {
+      console.error("检查好友申请失败:", e);
+    }
+  }
 }
 
 // ✅ 兼容：后端可能返回 R 包装，也可能直接返回 user

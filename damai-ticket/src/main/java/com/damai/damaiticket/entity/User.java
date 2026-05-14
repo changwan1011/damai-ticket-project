@@ -1,6 +1,7 @@
 package com.damai.damaiticket.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -21,9 +22,13 @@ public class User {
     // 角色：USER / ADMIN
     private String role;
 
-    // ✅ 新增：昵称
+    // 非数据库字段
+    @TableField(exist = false)
     private String nickname;
 
-    // ✅ 新增：邮箱
+    @TableField(exist = false)
     private String email;
+
+    @TableField(exist = false)
+    private String avatar;
 }

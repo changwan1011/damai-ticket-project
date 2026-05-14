@@ -275,7 +275,7 @@
       <el-tab-pane label="数据统计" name="stats">
         <el-card style="border-radius:14px;">
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <el-select v-model="statsShowId" placeholder="选择演出（来自演出管理列表）" style="width:360px;">
+            <el-select v-model="statsShowId" placeholder="选择演出（可跳过查看全部汇总）" style="width:360px;" clearable>
               <el-option
                   v-for="s in shows"
                   :key="s.id"
@@ -283,22 +283,24 @@
                   :value="s.id"
               />
             </el-select>
-            <el-button type="primary" @click="loadStats">查询</el-button>
+            <el-button type="primary" @click="loadStats" :loading="statsLoading">
+              {{ statsShowId ? '查询' : '查看全部汇总' }}
+            </el-button>
             <el-button @click="refreshStatsBase">刷新演出下拉</el-button>
           </div>
 
           <div v-if="stats" style="margin-top:16px;">
             <el-row :gutter="12">
-              <el-col :span="6"><el-card>总座位：<b>{{ stats.totalSeats }}</b></el-card></el-col>
-              <el-col :span="6"><el-card>已售座位：<b>{{ stats.soldSeats }}</b></el-card></el-col>
-              <el-col :span="6"><el-card>锁定座位：<b>{{ stats.lockedSeats }}</b></el-card></el-col>
-              <el-col :span="6"><el-card>售出率：<b>{{ (Number(stats.sellRate||0)*100).toFixed(1) }}%</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">总座位：<b>{{ stats.totalSeats ?? 0 }}</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">已售座位：<b>{{ stats.soldSeats ?? 0 }}</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">锁定座位：<b>{{ stats.lockedSeats ?? 0 }}</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">售出率：<b>{{ (Number(stats.sellRate||0)*100).toFixed(1) }}%</b></el-card></el-col>
             </el-row>
 
             <el-row :gutter="12" style="margin-top:12px;">
-              <el-col :span="6"><el-card>已支付订单：<b>{{ stats.paidOrders }}</b></el-card></el-col>
-              <el-col :span="6"><el-card>未支付订单：<b>{{ stats.unpaidOrders }}</b></el-card></el-col>
-              <el-col :span="12"><el-card>售出金额：<b>¥{{ stats.revenue }}</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">已支付订单：<b>{{ stats.paidOrders ?? 0 }}</b></el-card></el-col>
+              <el-col :span="6"><el-card shadow="hover">未支付订单：<b>{{ stats.unpaidOrders ?? 0 }}</b></el-card></el-col>
+              <el-col :span="12"><el-card shadow="hover">售出金额：<b>¥{{ stats.revenue ?? 0 }}</b></el-card></el-col>
             </el-row>
 
             <el-descriptions
@@ -317,7 +319,7 @@
 
 
             <div style="margin-top:14px;">
-              <el-progress :percentage="Math.round(Number(stats.sellRate||0) * 100)" />
+              <el-progress :percentage="Math.round(Number(stats.sellRate||0) * 100)" :color="sellRateColor" />
             </div>
 
             <el-card style="margin-top:12px; border-radius:14px;" v-if="stats">
@@ -361,7 +363,52 @@
           </div>
 
           <div v-else style="margin-top:16px;color:#999;">
-            请选择一个演出并点击「查询」查看销售统计。
+            点击「查看全部汇总」查看整体销售情况，或选择一个演出查看详情。
+          </div>
+        </el-card>
+
+        <!-- ===================== 横向对比分析 ===================== -->
+        <el-card style="margin-top:16px; border-radius:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-weight:800;font-size:16px;">📊 各演出售票对比分析</div>
+            <el-button size="small" @click="loadComparison" :loading="comparisonLoading">刷新数据</el-button>
+          </div>
+
+          <div v-loading="comparisonLoading">
+            <el-row :gutter="16" v-if="comparisonData.length > 0">
+              <el-col :span="8" v-for="item in comparisonData" :key="item.showId">
+                <el-card shadow="hover" style="margin-bottom:12px;">
+                  <div style="font-weight:600;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ item.showTitle }}
+                  </div>
+                  <div style="font-size:12px;color:#666;margin-bottom:10px;">
+                    {{ item.category }}
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span>总座位</span>
+                    <b>{{ item.totalSeats }}</b>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span>已售</span>
+                    <b style="color:#67c23a">{{ item.soldSeats }}</b>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                    <span>收入</span>
+                    <b style="color:#f56c6c;">¥{{ item.revenue }}</b>
+                  </div>
+                  <el-progress 
+                    :percentage="Math.round((item.soldSeats / (item.totalSeats || 1)) * 100)" 
+                    :color="getProgressColor((item.soldSeats / (item.totalSeats || 1)) * 100)"
+                    :stroke-width="10"
+                  />
+                  <div style="text-align:right;font-size:12px;color:#909399;margin-top:4px;">
+                    {{ (item.soldSeats / (item.totalSeats || 1) * 100).toFixed(1) }}%
+                  </div>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <el-empty v-else description="暂无对比数据" />
           </div>
         </el-card>
       </el-tab-pane>
@@ -382,6 +429,25 @@ const active = ref("show");
 const statsShowId = ref(null);
 const stats = ref(null);
 const ratingPage = ref({ records: [], total: 0, current: 1, size: 5 });
+const statsLoading = ref(false);
+
+// 横向对比数据
+const comparisonData = ref([]);
+const comparisonLoading = ref(false);
+
+async function loadComparison() {
+  comparisonLoading.value = true;
+  try {
+    const res = await request.get("/admin/stats/comparison");
+    if (res.data && res.data.code === 0) {
+      comparisonData.value = res.data.data || [];
+    }
+  } catch (e) {
+    console.error("加载对比数据失败:", e);
+  } finally {
+    comparisonLoading.value = false;
+  }
+}
 
 async function loadRatings(page = 1) {
   if (!statsShowId.value) return;
@@ -398,26 +464,34 @@ async function loadRatings(page = 1) {
 }
 
 async function loadStats() {
-  if (!statsShowId.value) {
-    return ElMessage.warning("请选择一个演出");
-  }
-
+  statsLoading.value = true;
   try {
     console.log("[stats] querying showId =", statsShowId.value);
 
-    const res = await request.get(`/admin/stats/show/${statsShowId.value}`);
-    console.log("[stats] response =", res);
+    // 如果选择了演出ID，加载单个演出统计
+    if (statsShowId.value) {
+      const res = await request.get(`/admin/stats/show/${statsShowId.value}`);
+      console.log("[stats] response =", res);
 
-    if (!res.data || res.data.code !== 0) {
-      return ElMessage.error(res.data?.msg || "获取统计失败（后端返回非成功）");
+      if (!res.data || res.data.code !== 0) {
+        return ElMessage.error(res.data?.msg || "获取统计失败（后端返回非成功）");
+      }
+
+      stats.value = res.data.data;
+      await loadRatings(1);
+      ElMessage.success("统计加载成功");
+    } else {
+      // 不选则加载汇总统计
+      const res = await request.get("/admin/stats/summary");
+      if (res.data && res.data.code === 0) {
+        stats.value = res.data.data;
+      }
     }
-
-    stats.value = res.data.data;
-    await loadRatings(1);
-    ElMessage.success("统计加载成功");
   } catch (e) {
     console.error("[stats] error =", e);
     ElMessage.error("统计查询失败：请检查接口是否存在/是否401/是否跨域");
+  } finally {
+    statsLoading.value = false;
   }
 }
 
@@ -733,6 +807,22 @@ function onUploadError() {
   ElMessage.error("上传失败：请检查后端是否启动/CORS");
 }
 
+// 售出率进度条颜色
+function sellRateColor(percentage) {
+  if (percentage < 30) return '#909399';
+  if (percentage < 60) return '#e6a23c';
+  if (percentage < 80) return '#409eff';
+  return '#67c23a';
+}
+
+// 对比卡片进度条颜色
+function getProgressColor(percentage) {
+  if (percentage < 30) return '#909399';
+  if (percentage < 60) return '#e6a23c';
+  if (percentage < 80) return '#409eff';
+  return '#67c23a';
+}
+
 onMounted(() => {
   if ((localStorage.getItem("role") || "").toUpperCase() !== "ADMIN") {
     ElMessage.error("无权限访问后台");
@@ -742,7 +832,10 @@ onMounted(() => {
   loadShows(1);
   loadOrders();
   loadUsers(1);
-
+  // 默认加载汇总统计
+  loadStats();
+  // 默认加载横向对比数据
+  loadComparison();
 });
 </script>
 

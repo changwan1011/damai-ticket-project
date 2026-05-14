@@ -45,3 +45,12 @@ jobs:
           name: frontend-dist
           path: damai-ticket-frontend/dist
           retention-days: 7
+
+      - name: Display build summary
+        run: |
+          echo "=== Frontend Build Summary ==="
+          echo "✅ Dependencies installed"
+          echo "✅ Lint check completed"
+          echo "✅ Production build ready"
+          echo "📦 Build artifacts uploaded"
+          echo "============================="
